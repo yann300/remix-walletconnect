@@ -21,14 +21,16 @@ export class RemixClient extends PluginClient {
     createClient(this);
     this.methods = ["sendAsync"];
     this.internalEvents = new EventManager()
+    this.infuraId = ''
     this.onload()
   }
 
   /**
    * Connect wallet button pressed.
    */
-  async onConnect() {
-
+  async onConnect(infuraId) {
+    // set infura id
+    this.infuraId = infuraId
     try {
       this.web3Modal = new Web3Modal({
         providerOptions: this.getProviderOptions() // required
@@ -79,14 +81,14 @@ export class RemixClient extends PluginClient {
   }
 
   getInfuraId () {
-    return localStorage.getItem(INFURA_ID_KEY)
+    return this.infuraId
   }
 
   /**
    * Disconnect wallet button pressed.
    */
   async onDisconnect() {
-    this.web3Modal = null
+    
     // TODO: Which providers have close method?
     if (this.provider && this.provider.close) {
       await this.provider.close();
@@ -100,6 +102,7 @@ export class RemixClient extends PluginClient {
     } else {
       this.internalEvents.emit('disconnect')
     }
+    this.web3Modal = null
   }
 
   getProviderOptions() {
