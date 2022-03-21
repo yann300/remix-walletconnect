@@ -179,7 +179,15 @@ export class RemixClient extends PluginClient {
           resolve(message)
         })
       } else {
-        resolve({"jsonrpc": "2.0", "result": [], "id": data.id})
+        await this.onConnect()
+        if (this.provider) {
+          this.provider.sendAsync(data, (error, message) => {
+            if (error) return reject(error)
+            resolve(message)
+          })
+        } else {
+          resolve({"jsonrpc": "2.0", "result": [], "id": data.id})  
+        }
       }
     })
   }
