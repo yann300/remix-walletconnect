@@ -6,7 +6,7 @@ const p = new RemixClient()
 function App() {
 
   const [infuraId, setinfuraId] = useLocalStorage(
-      "INFURA_ID_KEY",
+      INFURA_ID_KEY,
       ''
   );
 

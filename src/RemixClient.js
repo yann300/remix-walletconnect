@@ -12,7 +12,7 @@ import BurnerConnectProvider from "@burner-wallet/burner-connect-provider";
 import MewConnect from "@myetherwallet/mewconnect-web-client";
 import EventManager from "events"
 
-export const INFURA_ID_KEY = 'walletconnect-infura-id'
+export const INFURA_ID_KEY = 'INFURA_ID_KEY'
 
 export class RemixClient extends PluginClient {
   provider
@@ -172,21 +172,26 @@ export class RemixClient extends PluginClient {
   };
 
   sendAsync = (data) => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       if (this.provider) {
         this.provider.sendAsync(data, (error, message) => {
           if (error) return reject(error)
           resolve(message)
         })
       } else {
-        await this.onConnect()
-        if (this.provider) {
-          this.provider.sendAsync(data, (error, message) => {
-            if (error) return reject(error)
-            resolve(message)
-          })
+        const infuraKey = window.localStorage.getItem(INFURA_ID_KEY)
+        if (infuraKey) {
+          await this.onConnect(infuraKey)
+          if (this.provider) {
+            this.provider.sendAsync(data, (error, message) => {
+              if (error) return reject(error)
+              resolve(message)
+            })
+          } else {
+            resolve({"jsonrpc": "2.0", "result": [], "id": data.id})
+          }
         } else {
-          resolve({"jsonrpc": "2.0", "result": [], "id": data.id})  
+          resolve({"jsonrpc": "2.0", "result": [], "id": data.id})
         }
       }
     })
