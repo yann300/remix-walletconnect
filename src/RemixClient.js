@@ -12,7 +12,7 @@ import BurnerConnectProvider from "@burner-wallet/burner-connect-provider";
 import MewConnect from "@myetherwallet/mewconnect-web-client";
 import EventManager from "events"
 
-export const INFURA_ID_KEY = 'walletconnect-infura-id'
+export const INFURA_ID_KEY = 'INFURA_ID_KEY'
 
 export class RemixClient extends PluginClient {
   provider
@@ -21,14 +21,16 @@ export class RemixClient extends PluginClient {
     createClient(this);
     this.methods = ["sendAsync"];
     this.internalEvents = new EventManager()
+    this.infuraId = ''
     this.onload()
   }
 
   /**
    * Connect wallet button pressed.
    */
-  async onConnect() {
-
+  async onConnect(infuraId) {
+    // set infura id
+    this.infuraId = infuraId
     try {
       this.web3Modal = new Web3Modal({
         providerOptions: this.getProviderOptions() // required
@@ -79,14 +81,14 @@ export class RemixClient extends PluginClient {
   }
 
   getInfuraId () {
-    return localStorage.getItem(INFURA_ID_KEY)
+    return this.infuraId
   }
 
   /**
    * Disconnect wallet button pressed.
    */
   async onDisconnect() {
-    this.web3Modal = null
+    
     // TODO: Which providers have close method?
     if (this.provider && this.provider.close) {
       await this.provider.close();
@@ -100,6 +102,7 @@ export class RemixClient extends PluginClient {
     } else {
       this.internalEvents.emit('disconnect')
     }
+    this.web3Modal = null
   }
 
   getProviderOptions() {
@@ -169,14 +172,27 @@ export class RemixClient extends PluginClient {
   };
 
   sendAsync = (data) => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       if (this.provider) {
         this.provider.sendAsync(data, (error, message) => {
           if (error) return reject(error)
           resolve(message)
         })
       } else {
-        resolve({"jsonrpc": "2.0", "result": [], "id": data.id})
+        const infuraKey = window.localStorage.getItem(INFURA_ID_KEY)
+        if (infuraKey) {
+          await this.onConnect(infuraKey)
+          if (this.provider) {
+            this.provider.sendAsync(data, (error, message) => {
+              if (error) return reject(error)
+              resolve(message)
+            })
+          } else {
+            resolve({"jsonrpc": "2.0", "result": [], "id": data.id})
+          }
+        } else {
+          resolve({"jsonrpc": "2.0", "result": [], "id": data.id})
+        }
       }
     })
   }
